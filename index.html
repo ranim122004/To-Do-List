@@ -14,16 +14,17 @@
         <h1>To-Do List</h1>
     </header>
 
-    <form id="taskForm">
-        <input type="text" id="taskInput" placeholder="Enter a new task" required />
-        <button type="submit" title="Add Task">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="#000985" viewBox="0 0 16 16">
+    <form id="taskForm" aria-label="Add a new task to your list">
+        <input type="text" id="taskInput" placeholder="Enter a new task" required aria-label="Task description" />
+        <button type="submit" aria-label="Add Task" title="Add Task">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="#000985" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                <title>Add Task</title>
                 <path d="M8 1a1 1 0 0 1 1 1v5h5a1 1 0 1 1 0 2H9v5a1 1 0 1 1-2 0V9H2a1 1 0 1 1 0-2h5V2a1 1 0 0 1 1-1z" />
             </svg>
         </button>
     </form>
 
-    <ul id="taskList"></ul>
+    <ul id="taskList" aria-live="polite" aria-label="List of tasks"></ul>
 
     <script src="scripts.js"></script>
 </body>

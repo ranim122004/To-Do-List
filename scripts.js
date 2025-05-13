@@ -4,18 +4,31 @@ const taskForm = document.getElementById("taskForm");
 const taskInput = document.getElementById("taskInput");
 const taskList = document.getElementById("taskList");
 
+// Accessibility-friendly empty state message
+const emptyMessage = document.createElement("p");
+emptyMessage.id = "emptyMessage";
+emptyMessage.textContent = "No tasks yet! 🎉";
+emptyMessage.style.textAlign = "center";
+emptyMessage.style.marginTop = "20px";
+emptyMessage.style.color = "white";
+emptyMessage.setAttribute("role", "status");
+emptyMessage.setAttribute("aria-live", "polite");
+
 taskForm.addEventListener("submit", function (e) {
     e.preventDefault();
-    addTask(taskInput.value.trim());
+    const input = taskInput.value.trim();
+    if (input === "") return;
+    addTask(input);
     taskInput.value = "";
 });
 
 function addTask(description) {
-    if (description === "") return;
+    const trimmedDesc = description.trim();
+    if (!trimmedDesc) return;
 
     const task = {
         id: Date.now(),
-        description,
+        description: trimmedDesc,
         completed: false
     };
 
@@ -23,24 +36,30 @@ function addTask(description) {
     tasks.push(task);
     saveTasksToStorage(tasks);
     renderTask(task);
+    updateEmptyMessage();
 }
 
 function renderTask(task) {
     const li = document.createElement("li");
     li.setAttribute("data-id", task.id);
+    li.classList.add("fade-in");
     if (task.completed) li.classList.add("completed");
 
     li.innerHTML = `
         <label class="task-label">
-            <input type="checkbox" class="check-complete" ${task.completed ? "checked" : ""}>
+            <input type="checkbox" class="check-complete" ${task.completed ? "checked" : ""} aria-label="Mark task as completed">
             <span class="task-text">${task.description}</span>
         </label>
         <div class="task-buttons">
-            <button class="edit" title="Edit">&#9998;</button>
-            <button class="delete" title="Delete">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+            <button class="edit" title="Edit Task" aria-label="Edit Task">&#9998;</button>
+            <button class="delete" title="Delete Task" aria-label="Delete Task">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor"
+                    viewBox="0 0 16 16" role="img" aria-label="Delete " aria-hidden="true">
+                    <title>Delete Task </title>
                     <path d="M5.5 5.5A.5.5 0 0 1 6 5h4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0V6h-3v6.5a.5.5 0 0 1-1 0v-7z"/>
-                    <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1 0-2h4a1 1 0 0 1 2 0h4a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3a.5.5 0 0 0 0 1h11a.5.5 0 0 0 0-1h-11z"/>
+                    <path fill-rule="evenodd"
+                        d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1 0-2h4a1 1 0 0 1 2 0h4a1 1 0 0 1 1 1zM4.118 4 
+                        4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3a.5.5 0 0 0 0 1h11a.5.5 0 0 0 0-1h-11z"/>
                 </svg>
             </button>
         </div>
@@ -51,7 +70,23 @@ function renderTask(task) {
 
 function loadTasks() {
     const tasks = getTasksFromStorage();
-    tasks.forEach(renderTask);
+    if (tasks.length === 0) {
+        taskList.parentNode.appendChild(emptyMessage);
+    } else {
+        tasks.forEach(renderTask);
+    }
+}
+
+function updateEmptyMessage() {
+    const tasks = getTasksFromStorage();
+    const hasTasks = tasks.length > 0;
+    const existingMessage = document.getElementById("emptyMessage");
+
+    if (!hasTasks && !existingMessage) {
+        taskList.parentNode.appendChild(emptyMessage);
+    } else if (hasTasks && existingMessage) {
+        existingMessage.remove();
+    }
 }
 
 function getTasksFromStorage() {
@@ -83,10 +118,11 @@ taskList.addEventListener("change", function (e) {
 });
 
 function deleteTask(id, li) {
-    let tasks = getTasksFromStorage();
-    tasks = tasks.filter(task => task.id !== id);
-    saveTasksToStorage(tasks);
+    const tasks = getTasksFromStorage();
+    const updatedTasks = tasks.filter(task => task.id !== id);
+    saveTasksToStorage(updatedTasks);
     li.remove();
+    updateEmptyMessage();
 }
 
 function completeTask(id, li, checked) {
@@ -104,13 +140,14 @@ function editTask(id, li) {
     const oldText = span.textContent;
     const newText = prompt("Edit your task:", oldText);
 
-    if (newText && newText.trim() !== "") {
+    const trimmedNew = newText?.trim();
+    if (trimmedNew) {
         const tasks = getTasksFromStorage();
         const task = tasks.find(task => task.id === id);
         if (task) {
-            task.description = newText.trim();
+            task.description = trimmedNew;
             saveTasksToStorage(tasks);
-            span.textContent = newText.trim();
+            span.textContent = trimmedNew;
         }
     }
 }
